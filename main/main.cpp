@@ -181,7 +181,7 @@ static void foc_move_task(void* arg) {
 void foc_init(void) {
     xTaskCreate(foc_loop_task, "foc_loop_task", TASK_STACK_SIZE, NULL, 10, NULL);
     vTaskDelay(pdMS_TO_TICKS(100));
-    xTaskCreate(foc_move_task, "foc_loop_task", TASK_STACK_SIZE, NULL, 10, NULL);
+    xTaskCreate(foc_move_task, "foc_move_task", TASK_STACK_SIZE, NULL, 10, NULL);
     vTaskDelay(pdMS_TO_TICKS(100));
     xTaskCreate(get_angle_task, "get_angle_task", TASK_STACK_SIZE, NULL, 10, NULL);
 }
