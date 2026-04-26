@@ -27,7 +27,7 @@ TaskHandle_t uart_write_task_handle;
 //******************************** UART Output //********************************
 
 static float g_constant_force;
-static float g_damper;
+static float g_damper = MOTOR_DAMPING_MIN;
 
 void uart_backend_output(float* constant_force, float* damper) {
     *constant_force = g_constant_force;

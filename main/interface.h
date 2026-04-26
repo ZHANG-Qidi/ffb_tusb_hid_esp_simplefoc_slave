@@ -8,7 +8,9 @@
 
 #define TASK_STACK_SIZE (4096)
 
-//******************************** //********************************
+//******************************** Motor Backend Configuration //********************************
+
+#define MOTOR_DAMPING_MIN (0.1f)
 
 #define ESPNOW_BACKEND 1
 
