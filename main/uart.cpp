@@ -1,6 +1,5 @@
 #include "driver/uart.h"
 
-#include "driver/gpio.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -10,8 +9,8 @@ static const char* TAG = "ffb_uart";
 
 //******************************** UART Configure //********************************
 
-#define UART_TXD (GPIO_NUM_23)
-#define UART_RXD (GPIO_NUM_22)
+#define UART_TXD (CONFIG_FFB_UART_TXD)
+#define UART_RXD (CONFIG_FFB_UART_RXD)
 #define UART_RTS (UART_PIN_NO_CHANGE)
 #define UART_CTS (UART_PIN_NO_CHANGE)
 
