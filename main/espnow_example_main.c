@@ -67,7 +67,6 @@ static void example_wifi_init(void) {
     ESP_ERROR_CHECK(esp_wifi_set_mode(ESPNOW_WIFI_MODE));
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(esp_wifi_set_channel(CONFIG_ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE));
-    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
 #if CONFIG_ESPNOW_ENABLE_LONG_RANGE
     ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR));
@@ -186,7 +185,6 @@ static void example_espnow_task(void* pvParameter) {
     uint8_t recv_state_remote = EXAMPLE_ESPNOW_DATA_BROADCAST_RECEIVED_NOT;
     uint16_t recv_seq = 0;
     uint32_t recv_magic = 0;
-    // bool is_broadcast = false;
     int ret;
 
     vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -274,11 +272,6 @@ static void example_espnow_task(void* pvParameter) {
                         memcpy(peer->peer_addr, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                         ESP_ERROR_CHECK(esp_now_add_peer(peer));
                         free(peer);
-                        esp_now_rate_config_t rate_cfg = {
-                            .phymode = WIFI_PHY_MODE_HT20,
-                            .rate = WIFI_PHY_RATE_MCS7_SGI,
-                        };
-                        ESP_ERROR_CHECK(esp_now_set_peer_rate_config(recv_cb->mac_addr, &rate_cfg));
                     }
 
                     /* Indicates that the device has received broadcast ESPNOW data. */
@@ -461,8 +454,7 @@ static void example_espnow_deinit(example_espnow_send_param_t* send_param) {
 }
 
 void espnow_backend_init(void) {
-    // g_send_done_sem = xSemaphoreCreateBinary();
-    g_send_done_sem = xSemaphoreCreateCounting(2, 2);
+    g_send_done_sem = xSemaphoreCreateBinary();
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
