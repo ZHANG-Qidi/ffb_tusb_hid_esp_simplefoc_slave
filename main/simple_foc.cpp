@@ -18,12 +18,12 @@
 #define VOLTAGE_SENSOR_ALIGN (3.0f)
 #define DAMPING_MAX_VELOCITY (6.0f * PI)
 
-#define MOTOR_A (GPIO_NUM_25)
-#define MOTOR_B (GPIO_NUM_26)
-#define MOTOR_C (GPIO_NUM_27)
+#define MOTOR_A (CONFIG_MOTOR_A)
+#define MOTOR_B (CONFIG_MOTOR_B)
+#define MOTOR_C (CONFIG_MOTOR_C)
 
-#define WIRE_SDA (GPIO_NUM_32)
-#define WIRE_SCL (GPIO_NUM_33)
+#define WIRE_SDA ((gpio_num_t)CONFIG_IIC_SDA)
+#define WIRE_SCL ((gpio_num_t)CONFIG_IIC_SCL)
 
 #define FOC_MONITOR_BAUD CONFIG_MONITOR_BAUD
 
