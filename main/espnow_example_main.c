@@ -38,12 +38,11 @@ static const char* TAG = "espnow_example";
 
 TaskHandle_t espnow_write_task_handle;
 
-static float g_constant_force;
-static float g_damper = MOTOR_DAMPING_MIN;
+static ffb_output_t g_ffb_output_data = {.damper = MOTOR_DAMPING_MIN};
 
 void espnow_backend_output(float* constant_force, float* damper) {
-    *constant_force = g_constant_force;
-    *damper = g_damper;
+    *constant_force = g_ffb_output_data.constant_force;
+    *damper = g_ffb_output_data.damper;
 }
 
 static SemaphoreHandle_t g_send_done_sem = NULL;
@@ -254,14 +253,8 @@ static void example_espnow_task(void* pvParameter) {
 
                                 /* Start sending unicast ESPNOW data. */
                                 send_param->broadcast = BS_UNICAST;
-                                send_param->state = EXAMPLE_ESPNOW_DATA_BROADCAST_RECEIVED;
                                 memcpy(send_param->dest_mac, peer_mac_addr, ESP_NOW_ETH_ALEN);
-                                example_espnow_data_prepare(send_param, NULL, 0);
-                                if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
-                                    ESP_LOGE(TAG, "Send error");
-                                    example_espnow_deinit(send_param);
-                                    vTaskDelete(NULL);
-                                }
+                                xSemaphoreGive(g_send_done_sem);
                             } else {
                                 ESP_LOGI(TAG, "Sending confim data: %d", confirm_count);
                                 send_next_broadcast(send_param, send_cb);
@@ -343,25 +336,19 @@ static void example_espnow_task(void* pvParameter) {
                     // ESP_LOGI(TAG, "Receive %dth unicast data from: " MACSTR ", len: %d", recv_seq, MAC2STR(recv_cb->mac_addr), recv_cb->data_len);
                     // ESP_LOGI(TAG, "payload: %s", payload);
 
+                    /* If receive unicast ESPNOW data, also stop sending broadcast ESPNOW data. */
                     if (send_param->broadcast != BS_UNICAST) {
                         ESP_LOGI(TAG, "Receive unicast data without BS_UNICAST");
                         ESP_LOGI(TAG, "Peer to " MACSTR "", MAC2STR(recv_cb->mac_addr));
+
                         /* Start sending unicast ESPNOW data. */
-                        memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
-                        /* If receive unicast ESPNOW data, also stop sending broadcast ESPNOW data. */
                         send_param->broadcast = BS_UNICAST;
+                        memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                         xSemaphoreGive(g_send_done_sem);
                     }
 
-                    if (payload[0] == 'F') {
-                        g_constant_force = strtof((const char*)&payload[1], NULL);
-                        xTaskNotify(*motor_task_handle, 0, eSetBits);
-                    }
-
-                    if (payload[0] == 'D') {
-                        g_damper = strtof((const char*)&payload[1], NULL);
-                        xTaskNotify(*motor_task_handle, 0, eSetBits);
-                    }
+                    memcpy(&g_ffb_output_data, payload, sizeof(ffb_output_t));
+                    xTaskNotify(*motor_task_handle, 0, eSetBits);
 
                 } else {
                     ESP_LOGI(TAG, "Receive error data from: " MACSTR "", MAC2STR(recv_cb->mac_addr));
@@ -382,15 +369,15 @@ static void espnow_write_task(void* pvParameter) {
             vTaskDelay(pdMS_TO_TICKS(10));
         }
         xTaskNotifyWait(0, 0xFFFFFFFF, NULL, portMAX_DELAY);
+        xSemaphoreTake(g_send_done_sem, portMAX_DELAY);
 
+        motor_output_t motor_output_data = {};
         float wheel_rad;
         motor_output(&wheel_rad);
+        motor_output_data.wheel_rad = wheel_rad;
 
         // Write data to the ESPNOW
-        char data[CONFIG_ESPNOW_SEND_LEN];
-        sprintf(data, "A%f", wheel_rad);
-        xSemaphoreTake(g_send_done_sem, portMAX_DELAY);
-        example_espnow_data_prepare(send_param, (uint8_t*)data, strlen(data));
+        example_espnow_data_prepare(send_param, (uint8_t*)&motor_output_data, sizeof(motor_output_t));
         /* Send the next data after the previous data is sent. */
         if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK) {
             ESP_LOGE(TAG, "Send error");
