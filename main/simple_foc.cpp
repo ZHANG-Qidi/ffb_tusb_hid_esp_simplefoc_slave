@@ -128,4 +128,5 @@ void foc_backend_init(void) {
     xTaskCreate(foc_loop_task, "foc_loop_task", TASK_STACK_SIZE, NULL, 10, NULL);
     xTaskCreate(foc_move_task, "foc_loop_task", TASK_STACK_SIZE, NULL, 10, NULL);
     xTaskCreate(foc_task, "foc_task", TASK_STACK_SIZE, NULL, 10, &foc_task_handle);
+    vTaskDelay(pdMS_TO_TICKS(500));
 }
