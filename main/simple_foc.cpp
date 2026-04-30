@@ -28,6 +28,7 @@
 #define FOC_MONITOR_BAUD CONFIG_MONITOR_BAUD
 #define SENSOR_MT6701 1
 #define SENSOR_AS5600 0
+#define SENSOR_STEP_NUM (2.0f)
 //******************************** SimpleFOC Input //********************************
 TaskHandle_t foc_task_handle;
 static float g_constant_force;
@@ -43,9 +44,11 @@ void foc_backend_output(float* wheel_rad) { *wheel_rad = g_wheel_rad; }
 #if SENSOR_MT6701
 static MT6701 sensor = MT6701(SPIX_HOST, SPI_CLK, SPI_Q, (gpio_num_t)-1, SPI_CSO);
 #define SENSOR_DIRECTION (-1.0f)
+#define SENSOR_STEP_MIN (0.0003835f)
 #elif SENSOR_AS5600
 static AS5600 sensor = AS5600(I2C_NUM_0, WIRE_SCL, WIRE_SDA);
 #define SENSOR_DIRECTION (1.0f)
+#define SENSOR_STEP_MIN (0.001534f)
 #endif
 // BLDC motor & driver instance
 static BLDCMotor motor = BLDCMotor(BLDC_MOTOR_PP);
@@ -54,7 +57,11 @@ static void get_angle_task(void* arg) {
     TickType_t last = xTaskGetTickCount();
     for (;;) {
         vTaskDelayUntil(&last, pdMS_TO_TICKS(1));
-        g_wheel_rad = sensor.getAngle() * SENSOR_DIRECTION;
+        float wheel_rad = sensor.getAngle() * SENSOR_DIRECTION;
+        if (fabsf(wheel_rad - g_wheel_rad) < SENSOR_STEP_MIN * SENSOR_STEP_NUM) {
+            continue;
+        }
+        g_wheel_rad = wheel_rad;
         xTaskNotify(*ffb_task_handle, 0, eSetBits);
         // ESP_LOGI(TAG, "A%f", g_wheel_rad);
     }
