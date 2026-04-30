@@ -21,6 +21,10 @@
 #define MOTOR_EN (CONFIG_MOTOR_EN)
 #define WIRE_SDA ((gpio_num_t)CONFIG_IIC_SDA)
 #define WIRE_SCL ((gpio_num_t)CONFIG_IIC_SCL)
+#define SPI_CSO ((gpio_num_t)CONFIG_SPI_CSO)
+#define SPI_CLK ((gpio_num_t)CONFIG_SPI_CLK)
+#define SPI_Q ((gpio_num_t)CONFIG_SPI_Q)
+#define SPIX_HOST ((spi_host_device_t)CONFIG_SPI_HOST_NUM)
 #define FOC_MONITOR_BAUD CONFIG_MONITOR_BAUD
 #define SENSOR_MT6701 1
 #define SENSOR_AS5600 0
@@ -35,9 +39,9 @@ void foc_backend_output(float* wheel_rad) { *wheel_rad = g_wheel_rad; }
 #if CONFIG_SOC_MCPWM_SUPPORTED
 #define USING_MCPWM
 #endif
-// magnetic sensor instance - I2C
+// magnetic sensor
 #if SENSOR_MT6701
-static MT6701 sensor = MT6701(I2C_NUM_0, WIRE_SCL, WIRE_SDA);
+static MT6701 sensor = MT6701(SPIX_HOST, SPI_CLK, SPI_Q, (gpio_num_t)-1, SPI_CSO);
 #define SENSOR_DIRECTION (-1.0f)
 #elif SENSOR_AS5600
 static AS5600 sensor = AS5600(I2C_NUM_0, WIRE_SCL, WIRE_SDA);
@@ -52,7 +56,7 @@ static void get_angle_task(void* arg) {
         vTaskDelayUntil(&last, pdMS_TO_TICKS(1));
         g_wheel_rad = sensor.getAngle() * SENSOR_DIRECTION;
         xTaskNotify(*ffb_task_handle, 0, eSetBits);
-        // ESP_LOGI(TAG, "A%f", wheel_rad);
+        // ESP_LOGI(TAG, "A%f", g_wheel_rad);
     }
 }
 static void foc_loop_task(void* arg) {
