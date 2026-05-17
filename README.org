@@ -1,0 +1,26 @@
+* 项目简介
+- 一个基于 ESP32 的力反馈 (FFB) 2804 云台电机方向盘的 从机 项目
+- FOC
+  - Simple FOC (只实现了电压控制的移植版)
+* 功能
+** FFB 前端
+*** ESP NOW
+- 和主机通过 ESP NOW 建立连接, 主机下发 FFB 数据, 从机上传 角度 数据
+*** UART
+- 和主机通过 UART 建立连接, 主机下发 FFB 数据, 从机上传 角度 数据
+** MOTOR
+*** FOC
+- 本机 FOC 直接控制电机
+** TODO 参数设置说明
+*** 前后端设置
+*** GPIO 和 硬件资源 设置
+*** FFB 参数设置
+* 硬件与软件
+** 硬件
+- ESP32
+- MT6701
+- AS5600
+- Simple FOC mini
+** 软件
+- ESP-IDF
+- ESP-IDF Extension for VS Code

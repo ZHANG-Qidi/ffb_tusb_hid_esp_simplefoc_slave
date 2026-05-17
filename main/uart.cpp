@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "interface.h"
-static const char* TAG = "ffb_uart";
+static const char *TAG = "ffb_uart";
 //******************************** UART Configure //********************************
 #define UART_TXD (CONFIG_FFB_UART_TXD)
 #define UART_RXD (CONFIG_FFB_UART_RXD)
@@ -19,12 +19,12 @@ TaskHandle_t uart_write_task_handle;
 //******************************** UART Output //********************************
 static float g_constant_force;
 static float g_damper = MOTOR_DAMPING_MIN;
-void uart_backend_output(float* constant_force, float* damper) {
+void uart_backend_output(float *constant_force, float *damper) {
     *constant_force = g_constant_force;
     *damper = g_damper;
 }
 //******************************** UART Function //********************************
-static void uart_read_task(void* arg) {
+static void uart_read_task(void *arg) {
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
     uart_config_t uart_config = {
@@ -57,11 +57,11 @@ static void uart_read_task(void* arg) {
                     buf[len] = '\0';
                     // ESP_LOGI(TAG, "%s", buf);
                     if (buf[0] == 'F') {
-                        g_constant_force = strtof((const char*)&buf[1], NULL);
+                        g_constant_force = strtof((const char *)&buf[1], NULL);
                         xTaskNotify(*motor_task_handle, 0, eSetBits);
                     }
                     if (buf[0] == 'D') {
-                        g_damper = strtof((const char*)&buf[1], NULL);
+                        g_damper = strtof((const char *)&buf[1], NULL);
                         xTaskNotify(*motor_task_handle, 0, eSetBits);
                     }
                     break;
@@ -81,7 +81,7 @@ static void uart_read_task(void* arg) {
         }
     }
 }
-static void uart_write_task(void* arg) {
+static void uart_write_task(void *arg) {
     for (;;) {
         xTaskNotifyWait(0, 0xFFFFFFFF, NULL, portMAX_DELAY);
         float wheel_rad;
@@ -89,7 +89,7 @@ static void uart_write_task(void* arg) {
         // Write data to the UART
         char data[64];
         sprintf(data, "A%f\n", wheel_rad);
-        uart_write_bytes(UART_PORT_NUM, (const char*)data, strlen(data));
+        uart_write_bytes(UART_PORT_NUM, (const char *)data, strlen(data));
     }
 }
 void uart_backend_init(void) {
